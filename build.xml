@@ -1,0 +1,41 @@
+<project name="dsv" default="jar">
+  <description>
+    Create and parse CSV in Clojure.
+  </description>
+
+  <property name="build.dir" location="build"/>
+  <property name="lib.dir" location="lib"/>
+  <property name="source.dir" location="src/clj"/>
+  <property name="jar.name" location="dsv.jar"/>
+
+  <target name="clean" description="Remove generated classfiles">
+    <delete dir="${build.dir}"/>
+  </target>
+
+  <target name="init">
+    <tstamp/>
+    <mkdir dir="${build.dir}"/>
+  </target>
+
+  <target name="compile" depends="init" description="Compile sources">
+    <java classname="clojure.lang.Compile">
+      <classpath>
+	<fileset dir="${lib.dir}">
+          <include name="**/*.jar"/>
+	</fileset>
+        <path location="${build.dir}"/>
+        <path location="${source.dir}"/>
+      </classpath>
+      <sysproperty key="clojure.compile.path" value="${build.dir}"/>
+      <arg value="se.abc.dsv.read"/>
+      <arg value="se.abc.dsv.write"/>
+    </java>
+  </target>
+
+  <target name="jar" description="Create jar file" depends="compile">
+    <jar jarfile="${jar.name}" index="true">
+      <fileset dir="${build.dir}" includes="**/*.class"/>
+    </jar>
+  </target>
+
+</project>
