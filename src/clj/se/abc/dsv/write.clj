@@ -49,12 +49,17 @@
 (defn- enclose [value re quote] 
   (if (re-find re value) (str quote value quote) value))
 
-(defn- escape [s quote] 
+(defn- escape [quote s] 
   (s/replace s (str quote) (str quote quote)))
 
+;; TODO: Escape the quote parameter in the regular expression when necessary.
 (defn- csv-collision [quote] 
-  (fn [val] (if (string? val) (enclose (escape val quote) (re-pattern (str "[,\n" quote "]")) quote) val)))
+  (fn [val] 
+    (if (string? val) 
+      (enclose ((partial escape quote) val) (re-pattern (str "[,\n" quote "]")) quote)
+      val)))
 
+;; TODO: Parameterise the delimiter collision function using multimethods.
 (defn write-csv
   "Generates comma-separated values (CSV) from a two-dimensional collection.
 
@@ -71,7 +76,7 @@
   ([dataset] (write-csv dataset \,))
   ([dataset delim] (write-csv dataset delim \"))
   ([dataset delim quote]
-  (dsv dataset (csv-collision quote) "\n" delim)))
+     (dsv dataset (csv-collision quote) \newline delim)))
 
 ;;; TESTS
 
@@ -127,6 +132,6 @@
        [["a'" "b"]["c" "d"]] \' "'a''',b\nc,d"))
 
 (deftest- escapes
-  (are [in out] (= (escape in \") out) 
+  (are [in out] (= (escape \" in) out) 
        "\"" "\"\""
        "a" "a"))
