@@ -25,6 +25,12 @@
 (err/deferror malformed-csv [] [msg]
 	      {:msg msg})
 
+(defn- pos [c tuple relation]
+  (str "(" 
+       "Line: " (inc (count relation)) ", " 
+       "Column: " (inc (count tuple)) ", "
+       "Character: \"" c "\")"))
+
 ;; This function is implemented as a finite state machine. There are four states
 ;; (:escaped, :relation, :tuple, :quotation), and five signals (character, carriage
 ;; return, delimiter, end-of-file, end-of-line and quote). Every combination of 
@@ -50,12 +56,10 @@
 		     (nil? c)       (conj relation (conj tuple field))
 		     (= c \newline) (recur :relation (rest s) "" [] (conj relation (conj tuple field)))
 		     (= c quote)    (recur :quotation (rest s) (str field c) tuple relation)
-		     :else          (err/raise malformed-csv 
-					       (str "Invalid character after escape: \"" c "\". Line: " 
-								  (+ (count relation) 1))))
+		     :else          (err/raise malformed-csv (str "Invalid character after escape " 
+								  (pos c tuple relation) ".")))
 	       (= state :relation)
-	       (cond (= c \return)(err/raise malformed-csv (str "Misplaced carrige return. Line: " 
-								       (+ (count relation) 1)))
+	       (cond (= c \return)  (recur :tuple (rest s) field tuple relation)
 		     (= c delim)    (recur :tuple (rest s) "" (conj tuple field) relation)
 		     (nil? c)       relation
 		     (= c \newline) (recur :relation (rest s) "" [] (conj relation (conj tuple field)))
@@ -75,10 +79,7 @@
 		     (= c \newline) (recur :quotation (rest s) (str field c) tuple relation)
 		     (= c quote)    (recur :escaped (rest s) field tuple relation)
 		     :else          (recur :quotation (rest s) (str field c) tuple relation))
-	       :else (err/raise malformed-csv 
-					       (str "Invalid state: \"" state "\". Character: " c ", line: " 
-								  (+ (count relation) 1)))
-	    )))))
+	       :else (err/raise malformed-csv (str "Invalid state: \"" state "\" " (pos c tuple relation) ".")))))))
 
 ;;; TESTS
 

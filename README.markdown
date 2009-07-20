@@ -15,13 +15,13 @@ Make it available to your program like this:
 
 `(use 'se.abc.dsv.write)`
 
-At its simplest you, create CSV by passing a dataset in the form of a
+At its simplest, you create CSV by passing a dataset in the form of a
 vector of vectors of strings to the function "write-csv":
 
 `(write-csv [["apple" "fruit"]["monkey" "animal"]])`
 
-You can customise the CSV by specifying field delimiter and quote
-character. In this example semicolons are used instead of commas as
+Customise the CSV by specifying field delimiter and quotecharacter.
+In this example semicolons are used instead of commas as
 field delimiters:
 
 `(write-csv [["apple" "fruit"]["monkey" "animal"]] \;)`
@@ -33,5 +33,5 @@ double quotes to avoid delimiter collision:
 
 ## Parsing CSV
 
-`(use 'se.abc.dsv.read)  
+`(use 'se.abc.dsv.read)
 (read-csv "apple,fruit\nmonkey,animal")`
