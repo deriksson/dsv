@@ -23,7 +23,8 @@
 		  ["http://tools.ietf.org/html/rfc4180", "RFC 4180"]]}
   se.abc.dsv.write 
   (:require [clojure.contrib.str-utils2 :as s :only (replace)])
-  (:use [clojure.test :only (deftest- is are)]))
+  (:use [clojure.test :only (deftest- is are)]
+	[clojure.contrib.str-utils :only (str-join)]))
 
 (defn- dsv 
   "Generates delimiter-separated values (DSV) from a two-dimensional collection.
@@ -41,18 +42,18 @@
   (dsv [[1 \"p\"][2 \"q\"]] #(str \"\\\"\" % \"\\\"\") \"\\n\" \",\")"
   [dataset collision & delim] 
   (if (coll? dataset) 
-    (apply str (interpose (first delim) 
-			  (map #(apply dsv % collision (rest delim)) dataset))) 
+    (str-join (first delim) 
+	      (map #(apply dsv % collision (rest delim)) dataset))
     (collision dataset)))
 
-(defn- enclose [value re] 
-  (if (re-find re value) (str "\"" value "\"") value))
+(defn- enclose [value re quote] 
+  (if (re-find re value) (str quote value quote) value))
 
-(defn- escape [str] 
-  (s/replace str "\"" "\"\""))
+(defn- escape [s quote] 
+  (s/replace s (str quote) (str quote quote)))
 
-(defn- csv-collision [val] 
-  (if (string? val) (enclose (escape val) #"[,\n\"]") val))
+(defn- csv-collision [quote] 
+  (fn [val] (if (string? val) (enclose (escape val quote) (re-pattern (str "[,\n" quote "]")) quote) val)))
 
 (defn write-csv
   "Generates comma-separated values (CSV) from a two-dimensional collection.
@@ -67,8 +68,10 @@
 
    Example:
    (write-csv [[1 \"a\"][2 \"b\"]])"
-  [dataset]
-  (dsv dataset csv-collision "\n" ","))
+  ([dataset] (write-csv dataset \,))
+  ([dataset delim] (write-csv dataset delim \"))
+  ([dataset delim quote]
+  (dsv dataset (csv-collision quote) "\n" delim)))
 
 ;;; TESTS
 
@@ -84,16 +87,16 @@
 
 (deftest- escapes-comma 
   (is (= "\"a,\",b\nc,d" 
-	 (dsv [["a," "b"]["c" "d"]] #(enclose % #",") "\n" ","))))
+	 (dsv [["a," "b"]["c" "d"]] #(enclose % #"," \") "\n" ","))))
 
 (deftest- encloses-comma 
-  (is (= "\"a,\"" (enclose "a," #"[\",\n]"))))
+  (is (= "\"a,\"" (enclose "a," #"[\",\n]" \"))))
 
 (deftest- encloses-lf 
-  (is (= "\"a\n\"" (enclose "a\n" #"[\",\n]"))))
+  (is (= "\"a\n\"" (enclose "a\n" #"[\",\n]" \"))))
 
 (deftest- does-not-enclose 
-  (is (= "a"(enclose "a" #"[\",\n]"))))
+  (is (= "a"(enclose "a" #"[\",\n]" \"))))
 
 (deftest- generates-three-dimensions
   (is (= "cedar,d;cedar,d\ncedar,d;cedar,d" 
@@ -107,7 +110,23 @@
        [["\"a\"" "b"]["c" "d"]] "\"\"\"a\"\"\",b\nc,d"
        [[1 "b"][2 "d"]] "1,b\n2,d"))
 
+(deftest- handles-delimiters
+  (are [in delim out] (= (write-csv in delim) out)  
+       [["a," "b"]["c" "d"]] \, "\"a,\",b\nc,d" 
+       [["a" "b"]["c" "d"]] \, "a,b\nc,d" 
+       [["a\n" "b"]["c" "d"]] \, "\"a\n\",b\nc,d"
+       [["\"a\"" "b"]["c" "d"]] \, "\"\"\"a\"\"\",b\nc,d"
+       [[1 "b"][2 "d"]] \, "1,b\n2,d"
+       [[1 "b"][2 "d"]] \| "1|b\n2|d"
+       [[1 "b"][2 "d"]] \; "1;b\n2;d"))
+
+(deftest- handles-quotes
+  (are [in quote out] (= (write-csv in \, quote) out)  
+       [["a," "b"]["c" "d"]] \' "'a,',b\nc,d" 
+       [["a," "b"]["c" "d"]] \" "\"a,\",b\nc,d"
+       [["a'" "b"]["c" "d"]] \' "'a''',b\nc,d"))
+
 (deftest- escapes
-  (are [in out] (= (escape in) out) 
+  (are [in out] (= (escape in \") out) 
        "\"" "\"\""
        "a" "a"))
