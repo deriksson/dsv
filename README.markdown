@@ -4,9 +4,9 @@ Create and parse CSV in Clojure.
 
 ## Installation
 
-`git clone git://github.com/deriksson/dsv.git`   
-`cd dsv`  
-`ant`
+- `git clone git://github.com/deriksson/dsv.git`   
+- `cd dsv`  
+- `ant`
 
 ## Creating CSV
 
@@ -42,7 +42,7 @@ a vector containing two vectors, each containing two strings.
 
 `(read-csv "apple,fruit\nmonkey,animal")`
 
-Use duckstreams to read a CSV file like this:
+Use duck-streams to read a CSV file like this:
 
 `(use 'clojure.contrib.duck-streams)
 (read-csv (slurp* "/tmp/stats.csv"))`
@@ -50,10 +50,10 @@ Use duckstreams to read a CSV file like this:
 The parser will raise an error if the CSV is not well-formed. Use 
 error-kit from clojure contrib to handle errors:
 
-`(use 'clojure.contrib.error-kit) 
-(with-handler 
- (read-csv (slurp* "/tmp/stats.csv"))
- (handle malformed-csv [msg] (println "Malformed CSV.")))`
+`(use 'clojure.contrib.error-kit)`  
+`(with-handler`  
+` (read-csv (slurp* "/tmp/stats.csv"))`  
+` (handle malformed-csv [msg] (println "Malformed CSV.")))`
 
 The CSV function can be customised to handle other field delimiters
 and quote characters than the defaults (',' and '"'):
