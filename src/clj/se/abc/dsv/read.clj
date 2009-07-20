@@ -29,13 +29,13 @@
 ;; (:escaped, :relation, :tuple, :quotation), and five signals (character, carriage
 ;; return, delimiter, end-of-file, end-of-line and quote). Every combination of 
 ;; state and signal maps to an input action and a new state unless the transition
-;; is leads to an end state or the signal is not allowed in the state context.
+;; leads to an end state or the signal is not allowed in the state context.
 ;; 
 ;; References: 
 ;; Finite state machine (Wikipedia), http://en.wikipedia.org/wiki/Finite-state_machine
 (defn read-csv
-  "Parses comma separated values and returns a vector of vectors of strings, representing
-   a dataset.
+  "Parses comma separated values (CSV) and returns a vector of vectors of strings
+   representinga dataset.
 
    Raises malformed-csv error if the input is not well formed. In valid CSV the number
    of fields should be the same on each line. This is not enforced."
