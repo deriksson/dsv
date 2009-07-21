@@ -39,7 +39,7 @@
 ;; (:escaped, :relation, :tuple, :quotation), and five signals (character, carriage
 ;; return, delimiter, end-of-file, end-of-line and quote). Every combination of 
 ;; state and signal maps to an action and a new state, unless the transition
-;; leads to an end state or the signal is not allowed in the state context.
+;; leads to a final state or the signal is not allowed in the state context.
 ;; 
 ;; References: 
 ;; Finite state machine (Wikipedia), http://en.wikipedia.org/wiki/Finite-state_machine
@@ -55,33 +55,33 @@
      (loop [state :tuple, s csv, fld "", tpl [], rel []]
        (let [c (first s)]
 	 (cond (= state :escaped)
-	       (cond (= c \return)  (recur :escaped (rest s) fld tpl rel)
-		     (= c delim)    (recur :tuple (rest s) "" (conj tpl fld) rel)
+	       (cond (= c \return)  (recur :escaped   (rest s) fld tpl rel)
+		     (= c delim)    (recur :tuple     (rest s) "" (conj tpl fld) rel)
 		     (nil? c)       (conj rel (conj tpl fld))
-		     (= c \newline) (recur :relation (rest s) "" [] (conj rel (conj tpl fld)))
+		     (= c \newline) (recur :relation  (rest s) "" [] (conj rel (conj tpl fld)))
 		     (= c quote)    (recur :quotation (rest s) (str fld c) tpl rel)
 		     :else          (r/raise malformed-csv (str "Invalid character after escape " 
 								(pos c tpl rel) ".")))
 	       (= state :relation)
-	       (cond (= c \return)  (recur :tuple (rest s) fld tpl rel)
-		     (= c delim)    (recur :tuple (rest s) "" (conj tpl fld) rel)
+	       (cond (= c \return)  (recur :tuple     (rest s) fld tpl rel)
+		     (= c delim)    (recur :tuple     (rest s) "" (conj tpl fld) rel)
 		     (nil? c)       rel
-		     (= c \newline) (recur :relation (rest s) "" [] (conj rel (conj tpl fld)))
+		     (= c \newline) (recur :relation  (rest s) "" [] (conj rel (conj tpl fld)))
 		     (= c quote)    (recur :quotation (rest s) fld tpl rel)
-		     :else          (recur :tuple (rest s) (str fld c) tpl rel))
+		     :else          (recur :tuple     (rest s) (str fld c) tpl rel))
 	       (= state :tuple)
-	       (cond (= c \return)  (recur :tuple (rest s) fld tpl rel)
-		     (= c delim)    (recur :tuple (rest s) "" (conj tpl fld) rel)
+	       (cond (= c \return)  (recur :tuple     (rest s) fld tpl rel)
+		     (= c delim)    (recur :tuple     (rest s) "" (conj tpl fld) rel)
 		     (nil? c)       (conj rel (conj tpl fld))
-		     (= c \newline) (recur :relation (rest s) "" [] (conj rel (conj tpl fld)))
+		     (= c \newline) (recur :relation  (rest s) "" [] (conj rel (conj tpl fld)))
 		     (= c quote)    (recur :quotation (rest s) fld tpl rel)
-		     :else          (recur :tuple (rest s) (str fld c) tpl rel))
+		     :else          (recur :tuple     (rest s) (str fld c) tpl rel))
 	       (= state :quotation)
 	       (cond (= c \return)  (recur :quotation (rest s) (str fld c) tpl rel)
 		     (= c delim)    (recur :quotation (rest s) (str fld c) tpl rel)
 		     (nil? c)       (r/raise malformed-csv "Quote not closed.")
 		     (= c \newline) (recur :quotation (rest s) (str fld c) tpl rel)
-		     (= c quote)    (recur :escaped (rest s) fld tpl rel)
+		     (= c quote)    (recur :escaped   (rest s) fld tpl rel)
 		     :else          (recur :quotation (rest s) (str fld c) tpl rel))
 	       :else (r/raise malformed-csv (str "Invalid state: \"" state "\" " 
 						 (pos c tpl rel) ".")))))))

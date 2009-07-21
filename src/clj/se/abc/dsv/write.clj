@@ -108,7 +108,8 @@
 
 (deftest- generates-three-dimensions
   (is (= "cedar,d;cedar,d\ncedar,d;cedar,d" 
-	 (dsv [[["cedar" "d"]["cedar" "d"]][["cedar" "d"]["cedar" "d"]]] str "\n" ";" ","))))
+	 (dsv [[["cedar" "d"]["cedar" "d"]][["cedar" "d"]["cedar" "d"]]] 
+	      str "\n" ";" ","))))
 
 (deftest- generates-csv
   (are [in out] (= (write-csv in) out)  
