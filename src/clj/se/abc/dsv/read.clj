@@ -14,16 +14,20 @@
 (ns #^{:author "Daniel Eriksson",
        :doc "Delimiter-separated values parser
 
-            This library parses delimiter-separated values (DSV) and renders them as collections.",
-       :see-also [["http://en.wikipedia.org/wiki/Delimiter-separated_values", "Delimiter-separeted values"]
-		  ["http://en.wikipedia.org/wiki/Comma-separated_values", "Comma-separated values"]
-		  ["http://tools.ietf.org/html/rfc4180", "RFC 4180"]]}
+            This library parses delimiter-separated values (DSV) and renders 
+            them as collections.",
+       :see-also [["http://en.wikipedia.org/wiki/Delimiter-separated_values", 
+		   "Delimiter-separeted values"]
+		  ["http://en.wikipedia.org/wiki/Comma-separated_values", 
+		   "Comma-separated values"]
+		  ["http://tools.ietf.org/html/rfc4180", 
+		   "RFC 4180"]]}
   se.abc.dsv.read 
   (:use [clojure.test :only (deftest- is are)] 
-	[clojure.contrib.error-kit :as err :only (deferror with-handler handle)]))
+	[clojure.contrib.error-kit :as r :only (deferror with-handler handle)]))
 
-(err/deferror malformed-csv [] [msg]
-	      {:msg msg})
+(r/deferror malformed-csv [] [msg]
+	    {:msg msg})
 
 (defn- pos [c tuple relation]
   (str "(" 
@@ -41,45 +45,46 @@
 ;; Finite state machine (Wikipedia), http://en.wikipedia.org/wiki/Finite-state_machine
 (defn read-csv
   "Parses comma separated values (CSV) and returns a vector of vectors of strings
-   representing a dataset.
+  representing a dataset.
 
-   Raises malformed-csv error if the input is not well formed. In valid CSV the number
-   of fields should be the same on each line. This is not enforced."
+  Raises malformed-csv error if the input is not well formed. In valid CSV the number
+  of fields should be the same on each line. This is not enforced."
   ([csv] (read-csv csv \,))
   ([csv delim] (read-csv csv delim \"))
   ([csv delim quote]
-     (loop [state :tuple, s csv, field "", tuple [], relation []]
+     (loop [state :tuple, s csv, fld "", tpl [], rel []]
        (let [c (first s)]
 	 (cond (= state :escaped)
-	       (cond (= c \return)  (recur :escaped (rest s) field tuple relation)
-		     (= c delim)    (recur :tuple (rest s) "" (conj tuple field) relation)
-		     (nil? c)       (conj relation (conj tuple field))
-		     (= c \newline) (recur :relation (rest s) "" [] (conj relation (conj tuple field)))
-		     (= c quote)    (recur :quotation (rest s) (str field c) tuple relation)
-		     :else          (err/raise malformed-csv (str "Invalid character after escape " 
-								  (pos c tuple relation) ".")))
+	       (cond (= c \return)  (recur :escaped (rest s) fld tpl rel)
+		     (= c delim)    (recur :tuple (rest s) "" (conj tpl fld) rel)
+		     (nil? c)       (conj rel (conj tpl fld))
+		     (= c \newline) (recur :relation (rest s) "" [] (conj rel (conj tpl fld)))
+		     (= c quote)    (recur :quotation (rest s) (str fld c) tpl rel)
+		     :else          (r/raise malformed-csv (str "Invalid character after escape " 
+								(pos c tpl rel) ".")))
 	       (= state :relation)
-	       (cond (= c \return)  (recur :tuple (rest s) field tuple relation)
-		     (= c delim)    (recur :tuple (rest s) "" (conj tuple field) relation)
-		     (nil? c)       relation
-		     (= c \newline) (recur :relation (rest s) "" [] (conj relation (conj tuple field)))
-		     (= c quote)    (recur :quotation (rest s) field tuple relation)
-		     :else          (recur :tuple (rest s) (str field c) tuple relation))
+	       (cond (= c \return)  (recur :tuple (rest s) fld tpl rel)
+		     (= c delim)    (recur :tuple (rest s) "" (conj tpl fld) rel)
+		     (nil? c)       rel
+		     (= c \newline) (recur :relation (rest s) "" [] (conj rel (conj tpl fld)))
+		     (= c quote)    (recur :quotation (rest s) fld tpl rel)
+		     :else          (recur :tuple (rest s) (str fld c) tpl rel))
 	       (= state :tuple)
-	       (cond (= c \return)  (recur :tuple (rest s) field tuple relation)
-		     (= c delim)    (recur :tuple (rest s) "" (conj tuple field) relation)
-		     (nil? c)       (conj relation (conj tuple field))
-		     (= c \newline) (recur :relation (rest s) "" [] (conj relation (conj tuple field)))
-		     (= c quote)    (recur :quotation (rest s) field tuple relation)
-		     :else          (recur :tuple (rest s) (str field c) tuple relation))
+	       (cond (= c \return)  (recur :tuple (rest s) fld tpl rel)
+		     (= c delim)    (recur :tuple (rest s) "" (conj tpl fld) rel)
+		     (nil? c)       (conj rel (conj tpl fld))
+		     (= c \newline) (recur :relation (rest s) "" [] (conj rel (conj tpl fld)))
+		     (= c quote)    (recur :quotation (rest s) fld tpl rel)
+		     :else          (recur :tuple (rest s) (str fld c) tpl rel))
 	       (= state :quotation)
-	       (cond (= c \return)  (recur :quotation (rest s) (str field c) tuple relation)
-		     (= c delim)    (recur :quotation (rest s) (str field c) tuple relation)
-		     (nil? c)       (err/raise malformed-csv "Quote not closed.")
-		     (= c \newline) (recur :quotation (rest s) (str field c) tuple relation)
-		     (= c quote)    (recur :escaped (rest s) field tuple relation)
-		     :else          (recur :quotation (rest s) (str field c) tuple relation))
-	       :else (err/raise malformed-csv (str "Invalid state: \"" state "\" " (pos c tuple relation) ".")))))))
+	       (cond (= c \return)  (recur :quotation (rest s) (str fld c) tpl rel)
+		     (= c delim)    (recur :quotation (rest s) (str fld c) tpl rel)
+		     (nil? c)       (r/raise malformed-csv "Quote not closed.")
+		     (= c \newline) (recur :quotation (rest s) (str fld c) tpl rel)
+		     (= c quote)    (recur :escaped (rest s) fld tpl rel)
+		     :else          (recur :quotation (rest s) (str fld c) tpl rel))
+	       :else (r/raise malformed-csv (str "Invalid state: \"" state "\" " 
+						 (pos c tpl rel) ".")))))))
 
 ;;; TESTS
 
@@ -126,7 +131,7 @@
        "\"\"\"a\"\"\",b" [["\"a\"" "b"]]
        ))
 
+;; We allow "a\n\r", altought it should count as malformed.
 (deftest- rejects-malformed-csv
-  (are [txt] (nil? (err/with-handler (read-csv txt) (err/handle malformed-csv [msg] nil)))
-       "\"\"\""
-       "a\n\r"))
+  (are [txt] (nil? (r/with-handler (read-csv txt) (r/handle malformed-csv [msg] nil)))
+       "\"\"\""))

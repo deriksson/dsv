@@ -4,21 +4,31 @@ Create and parse CSV in Clojure.
 
 ## Installation
 
-- `git clone git://github.com/deriksson/dsv.git`   
-- `cd dsv`  
-- `ant`
+1. Download the library source code, using git: 
+   `git clone git://github.com/deriksson/dsv.git`.
+2. Compile the source code and create a jar file by running ant from the
+   folder that was created in the first step: `cd dsv;ant`.
+3. The build command will create a jar in the root folder of the new
+   directory. Include this jar in your classpath.
+4. You will also need clojure contrib. A version of this library is
+   included in the lib directory.
 
 ## Creating CSV
 
-The function for creating CSV is in the namespace "se.abc.dsv.write".
+The function for creating CSV is in the namespace `se.abc.dsv.write`.
 Make it available to your program like this:
 
     (use 'se.abc.dsv.write)
 
 At its simplest, you create CSV by passing a dataset in the form of a
-vector of vectors of strings to the function "write-csv":
+vector of vectors of strings to the function `write-csv`:
 
     (write-csv [["apple" "fruit"]["monkey" "animal"]])
+
+You can use duck streams to create a CSV file:
+
+    (use 'clojure.contrib.duck-streams)
+    (spit "/tmp/stats.csv" (write-csv [["apple" "fruit"]["monkey" "animal"]]))
 
 Customise the CSV by specifying field delimiter and quote character.
 In this example semicolons are used instead of commas as
@@ -27,13 +37,13 @@ field delimiters:
     (write-csv [["apple" "fruit"]["monkey" "animal"]] \;)
 
 In the following example single quotes are used instead of the default
-double quotes for avoiding delimiter collisions:
+double quotes for preventing delimiter collisions:
 
     (write-csv [["apple, red" "fruit"]["apple, green" "fruit"]] \, \')
 
 ## Parsing CSV
 
-The namespace for the CSV parser is "se.abc.dsv.read":
+The namespace for the CSV parser is `se.abc.dsv.read`:
 
     (use 'se.abc.dsv.read)
 

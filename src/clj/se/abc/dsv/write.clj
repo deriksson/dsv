@@ -18,9 +18,12 @@
             client specifies delimiters and strategies for protection from delimiter 
             collision. There is a convenience function for generating comma-separated values 
             (CSV), a special case of DSV.",
-       :see-also [["http://en.wikipedia.org/wiki/Delimiter-separated_values", "Delimiter-separeted values"]
-		  ["http://en.wikipedia.org/wiki/Comma-separated_values", "Comma-separated values"]
-		  ["http://tools.ietf.org/html/rfc4180", "RFC 4180"]]}
+       :see-also [["http://en.wikipedia.org/wiki/Delimiter-separated_values", 
+		   "Delimiter-separeted values"]
+		  ["http://en.wikipedia.org/wiki/Comma-separated_values", 
+		   "Comma-separated values"]
+		  ["http://tools.ietf.org/html/rfc4180", 
+		   "RFC 4180"]]}
   se.abc.dsv.write 
   (:require [clojure.contrib.str-utils2 :as s :only (replace)])
   (:use [clojure.test :only (deftest- is are)]
@@ -63,16 +66,16 @@
 (defn write-csv
   "Generates comma-separated values (CSV) from a two-dimensional collection.
 
-   Specification of CSV format:
-   1. Each record is one line terminated by a line feed.
-   2. Fields are separated by commas. 
-   3. Fields with embedded commas, double-quote characters or line breaks
-      are enclosed within double-quote characters.
-   4. Embedded double-quote characters are represented by a pair of double-quote
-      characters.
+  Specification of CSV format:
+  1. Each record is one line terminated by a line feed.
+  2. Fields are separated by commas. 
+  3. Fields with embedded commas, double-quote characters or line breaks
+     are enclosed within double-quote characters.
+  4. Embedded double-quote characters are represented by a pair of double-quote
+     characters.
 
-   Example:
-   (write-csv [[1 \"a\"][2 \"b\"]])"
+  Example:
+  (write-csv [[1 \"a\"][2 \"b\"]])"
   ([dataset] (write-csv dataset \,))
   ([dataset delim] (write-csv dataset delim \"))
   ([dataset delim quote]
