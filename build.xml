@@ -16,26 +16,42 @@
     <tstamp/>
     <mkdir dir="${build.dir}"/>
   </target>
-
-  <target name="compile" depends="init" description="Compile sources">
+  
+  <target name="jar" description="Create jar file" depends="compile">
+    <jar jarfile="${jar.name}" index="true">
+      <fileset dir="${build.dir}" includes="**/*.class"/>
+    </jar>
+  </target>
+  
+  <!-- Adapted from Howard Lewis Ship (http://gist.github.com/151387) -->
+  <target name="compile" description="Compile Clojure sources.">
+    <mkdir dir="${build.dir}" />
+    
+    <!-- Seek out the namespaces to compile. Note 
+	 that this will fail if the actual name 
+	 of a package includes an underscore, as
+	 all underscores are converted to dashes. -->
+    <pathconvert pathsep=" " property="compile.namespaces">
+      <fileset dir="${source.dir}" includes="**/*.clj" />
+      <chainedmapper>
+        <packagemapper from="${source.dir}/*.clj" to="*" />
+        <filtermapper>
+          <replacestring from="_" to="-" />
+        </filtermapper>
+      </chainedmapper>
+    </pathconvert>
+    
     <java classname="clojure.lang.Compile">
       <classpath>
 	<fileset dir="${lib.dir}">
           <include name="**/*.jar"/>
 	</fileset>
-        <path location="${build.dir}"/>
-        <path location="${source.dir}"/>
+        <path location="${build.dir}" />
+        <path location="${source.dir}" />
       </classpath>
-      <sysproperty key="clojure.compile.path" value="${build.dir}"/>
-      <arg value="se.abc.dsv.read"/>
-      <arg value="se.abc.dsv.write"/>
+      <sysproperty key="clojure.compile.path" value="${build.dir}" />
+      <arg line="${compile.namespaces}" />
     </java>
-  </target>
-
-  <target name="jar" description="Create jar file" depends="compile">
-    <jar jarfile="${jar.name}" index="true">
-      <fileset dir="${build.dir}" includes="**/*.class"/>
-    </jar>
   </target>
 
 </project>

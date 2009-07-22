@@ -57,7 +57,7 @@
 	 (cond (= state :escaped)
 	       (cond (= c \return)  (recur :escaped   (rest s) fld tpl rel)
 		     (= c delim)    (recur :tuple     (rest s) "" (conj tpl fld) rel)
-		     (nil? c)       (conj rel (conj tpl fld))
+		     (nil? c)                                  (conj rel (conj tpl fld))
 		     (= c \newline) (recur :relation  (rest s) "" [] (conj rel (conj tpl fld)))
 		     (= c quote)    (recur :quotation (rest s) (str fld c) tpl rel)
 		     :else          (r/raise malformed-csv (str "Invalid character after escape " 
@@ -65,14 +65,14 @@
 	       (= state :relation)
 	       (cond (= c \return)  (recur :tuple     (rest s) fld tpl rel)
 		     (= c delim)    (recur :tuple     (rest s) "" (conj tpl fld) rel)
-		     (nil? c)       rel
+		     (nil? c)                                  rel
 		     (= c \newline) (recur :relation  (rest s) "" [] (conj rel (conj tpl fld)))
 		     (= c quote)    (recur :quotation (rest s) fld tpl rel)
 		     :else          (recur :tuple     (rest s) (str fld c) tpl rel))
 	       (= state :tuple)
 	       (cond (= c \return)  (recur :tuple     (rest s) fld tpl rel)
 		     (= c delim)    (recur :tuple     (rest s) "" (conj tpl fld) rel)
-		     (nil? c)       (conj rel (conj tpl fld))
+		     (nil? c)                                  (conj rel (conj tpl fld))
 		     (= c \newline) (recur :relation  (rest s) "" [] (conj rel (conj tpl fld)))
 		     (= c quote)    (recur :quotation (rest s) fld tpl rel)
 		     :else          (recur :tuple     (rest s) (str fld c) tpl rel))
