@@ -1,6 +1,11 @@
-# DSV
+# DSV: Create and parse CSV in Clojure
 
-Create and parse CSV in Clojure.
+This library handles text formats that use delimiter-separated values (DSV).
+It contains functions for reading and writing comma-separated values (CSV)
+files.
+
+The implementation contains no direct Java calls and the only dependencies 
+are Clojure and Clojure Contrib.
 
 ## Installation
 
