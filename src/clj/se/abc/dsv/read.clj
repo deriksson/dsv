@@ -54,37 +54,40 @@
   ([csv delim quote]
      (loop [state :tuple, s csv, fld "", tpl [], rel []]
        (let [c (first s)]
-	 (cond (= state :escaped)
-	       (cond (= c \return)  (recur :escaped   (rest s) fld tpl rel)
-		     (= c delim)    (recur :tuple     (rest s) "" (conj tpl fld) rel)
-		     (nil? c)                                  (conj rel (conj tpl fld))
-		     (= c \newline) (recur :relation  (rest s) "" [] (conj rel (conj tpl fld)))
-		     (= c quote)    (recur :quotation (rest s) (str fld c) tpl rel)
-		     :else          (r/raise malformed-csv (str "Invalid character after escape " 
-								(pos c tpl rel) ".")))
-	       (= state :relation)
-	       (cond (= c \return)  (recur :tuple     (rest s) fld tpl rel)
-		     (= c delim)    (recur :tuple     (rest s) "" (conj tpl fld) rel)
-		     (nil? c)                                  rel
-		     (= c \newline) (recur :relation  (rest s) "" [] (conj rel (conj tpl fld)))
-		     (= c quote)    (recur :quotation (rest s) fld tpl rel)
-		     :else          (recur :tuple     (rest s) (str fld c) tpl rel))
-	       (= state :tuple)
-	       (cond (= c \return)  (recur :tuple     (rest s) fld tpl rel)
-		     (= c delim)    (recur :tuple     (rest s) "" (conj tpl fld) rel)
-		     (nil? c)                                  (conj rel (conj tpl fld))
-		     (= c \newline) (recur :relation  (rest s) "" [] (conj rel (conj tpl fld)))
-		     (= c quote)    (recur :quotation (rest s) fld tpl rel)
-		     :else          (recur :tuple     (rest s) (str fld c) tpl rel))
-	       (= state :quotation)
-	       (cond (= c \return)  (recur :quotation (rest s) (str fld c) tpl rel)
-		     (= c delim)    (recur :quotation (rest s) (str fld c) tpl rel)
-		     (nil? c)       (r/raise malformed-csv "Quote not closed.")
-		     (= c \newline) (recur :quotation (rest s) (str fld c) tpl rel)
-		     (= c quote)    (recur :escaped   (rest s) fld tpl rel)
-		     :else          (recur :quotation (rest s) (str fld c) tpl rel))
-	       :else (r/raise malformed-csv (str "Invalid state: \"" state "\" " 
-						 (pos c tpl rel) ".")))))))
+	 (condp = state 
+	   :escaped
+	   (condp = c 
+	     \return  (recur :escaped   (rest s) fld tpl rel)
+	     delim    (recur :tuple     (rest s) "" (conj tpl fld) rel)
+	     nil                                 (conj rel (conj tpl fld))
+	     \newline (recur :relation  (rest s) "" [] (conj rel (conj tpl fld)))
+	     quote    (recur :quotation (rest s) (str fld c) tpl rel)
+	     (r/raise malformed-csv (format "Invalid character after escape %1$s." (pos c tpl rel))))
+	   :relation
+	   (condp = c 
+	     \return  (recur :tuple     (rest s) fld tpl rel)
+	     delim    (recur :tuple     (rest s) "" (conj tpl fld) rel)
+	     nil                                 rel
+	     \newline (recur :relation  (rest s) "" [] (conj rel (conj tpl fld)))
+	     quote    (recur :quotation (rest s) fld tpl rel)
+	     (recur :tuple              (rest s) (str fld c) tpl rel))
+	   :tuple
+	   (condp = c 
+	     \return  (recur :tuple     (rest s) fld tpl rel)
+	     delim    (recur :tuple     (rest s) "" (conj tpl fld) rel)
+	     nil                                 (conj rel (conj tpl fld))
+	     \newline (recur :relation  (rest s) "" [] (conj rel (conj tpl fld)))
+	     quote    (recur :quotation (rest s) fld tpl rel)
+	     (recur :tuple              (rest s) (str fld c) tpl rel))
+	   :quotation
+	   (condp = c 
+	     \return  (recur :quotation (rest s) (str fld c) tpl rel)
+	     delim    (recur :quotation (rest s) (str fld c) tpl rel)
+	     nil      (r/raise malformed-csv "Quote not closed.")
+	     \newline (recur :quotation (rest s) (str fld c) tpl rel)
+	     quote    (recur :escaped   (rest s) fld tpl rel)
+	     (recur :quotation          (rest s) (str fld c) tpl rel))
+	   (r/raise malformed-csv (format "Invalid state: \"%1$s\"%2$s." state (pos c tpl rel))))))))
 
 ;;; TESTS
 
